@@ -41,7 +41,10 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: gradle
+      - uses: android-actions/setup-android@v3
       - run: chmod +x gradlew
+      - name: Generate local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
       - id: version
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
