@@ -57,15 +57,22 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           
           # Rename dev debug
-          if [ -f app/build/outputs/apk/dev/debug/*.apk ]; then
+          if ls app/build/outputs/apk/dev/debug/*.apk >/dev/null 2>&1; then
             mv app/build/outputs/apk/dev/debug/*.apk \
                app/build/outputs/apk/dev/debug/RafGitTools-${VERSION}-dev-debug.apk
           fi
           
           # Rename production release
-          if [ -f app/build/outputs/apk/production/release/*.apk ]; then
+          if ls app/build/outputs/apk/production/release/*.apk >/dev/null 2>&1; then
             mv app/build/outputs/apk/production/release/*.apk \
                app/build/outputs/apk/production/release/RafGitTools-${VERSION}-production-release.apk
+          fi
+      - name: Validate nightly APK output
+        run: |
+          APK_COUNT=$(find app/build/outputs/apk -name "*.apk" | wc -l)
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "Nightly build generated no APK files."
+            exit 1
           fi
       
       - name: Upload nightly builds
@@ -75,6 +82,7 @@ jobs:
           path: |
             app/build/outputs/apk/**/*.apk
           retention-days: 7
+          if-no-files-found: error
       
       - name: Upload test results
         if: always()

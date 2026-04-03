@@ -57,12 +57,21 @@ jobs:
       - name: Build ${{ matrix.variant }}
         if: inputs.run_release_variant != false || !contains(matrix.variant, 'Release')
         run: ./gradlew assemble${{ matrix.variant }} ${{ inputs.gradle_args || '--stacktrace' }}
+      - name: Validate APK output for ${{ matrix.variant }}
+        if: inputs.run_release_variant != false || !contains(matrix.variant, 'Release')
+        run: |
+          APK_COUNT=$(find app/build/outputs/apk -name "*.apk" | wc -l)
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "No APK generated for variant ${{ matrix.variant }}"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: apk-${{ matrix.variant }}
           path: app/build/outputs/apk/**/*.apk
           retention-days: 14
+          if-no-files-found: error
 
   test:
     name: Unit Tests (Stage 2)
