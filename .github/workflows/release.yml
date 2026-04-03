@@ -54,6 +54,13 @@ jobs:
           fi
       - name: Build production release APK
         run: ./gradlew assembleProductionRelease ${{ inputs.gradle_args || '--stacktrace --info' }}
+      - name: Validate generated APK
+        run: |
+          APK_COUNT=$(find app/build/outputs/apk/production/release -maxdepth 1 -name "*.apk" | wc -l)
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "No APK generated in app/build/outputs/apk/production/release"
+            exit 1
+          fi
       - name: Rename APK
         run: |
           VERSION=${{ steps.version.outputs.version }}
@@ -67,6 +74,7 @@ jobs:
           path: |
             app/build/outputs/apk/production/release/*.apk
             CHANGELOG.md
+          if-no-files-found: error
       - name: Create Release and Upload APK
         if: github.event_name != 'workflow_dispatch' || inputs.publish_github_release == true
         uses: softprops/action-gh-release@v2
